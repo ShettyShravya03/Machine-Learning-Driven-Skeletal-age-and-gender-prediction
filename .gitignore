@@ -24,7 +24,7 @@ data/
 *.jpeg
 
 # Extras folder (your new one)
-# LAST DATASET
+# LAST Dataset/
 
 # Jupyter
 .ipynb_checkpoints/
