@@ -1,0 +1,30 @@
+# Environments
+cvm_env/
+venv/
+env/
+
+# Python
+__pycache__/
+*.pyc
+
+# Models
+*.pth
+*.pkl
+
+# Data
+*.xlsx
+*.csv
+*.zip
+datasets/
+data/
+
+# Images
+*.png
+*.jpg
+*.jpeg
+
+# Extras folder (your new one)
+# LAST DATASET
+
+# Jupyter
+.ipynb_checkpoints/
