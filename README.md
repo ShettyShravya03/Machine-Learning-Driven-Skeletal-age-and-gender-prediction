@@ -1,12 +1,16 @@
-# ML-Driven Skeletal Age & Gender Prediction using Cervical Vertebral Maturation (CVM)
+<!-- BANNER — upload CVM_banner.svg to this repo as banner.svg -->
+<p align="center">
+  <img src="./banner.svg" width="100%" alt="ML-Driven Skeletal Age & Gender Prediction using CVM">
+</p>
 
-> **Best Project of the Year — Commendation Prize · EXPRO 2025-26, NMAM Institute of Technology**
-
-[![Python](https://img.shields.io/badge/Python-3.10-3776AB?style=flat-square&logo=python&logoColor=white)](https://python.org)
-[![PyTorch](https://img.shields.io/badge/PyTorch-EE4C2C?style=flat-square&logo=pytorch&logoColor=white)](https://pytorch.org)
-[![Flask](https://img.shields.io/badge/Flask-000000?style=flat-square&logo=flask&logoColor=white)](https://flask.palletsprojects.com)
-[![React](https://img.shields.io/badge/React-61DAFB?style=flat-square&logo=react&logoColor=black)](https://react.dev)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](LICENSE)
+<p align="center">
+  <img src="https://img.shields.io/badge/Best%20Project%20of%20the%20Year-EXPRO%202025--26-f59e0b?style=for-the-badge&logo=trophy&logoColor=white">&nbsp;
+  <img src="https://img.shields.io/badge/Dice-0.94-d97706?style=for-the-badge">&nbsp;
+  <img src="https://img.shields.io/badge/AUC-0.912-b45309?style=for-the-badge">&nbsp;
+  <a href="https://python.org"><img src="https://img.shields.io/badge/Python-3.10-3776AB?style=for-the-badge&logo=python&logoColor=white"></a>&nbsp;
+  <a href="https://pytorch.org"><img src="https://img.shields.io/badge/PyTorch-EE4C2C?style=for-the-badge&logo=pytorch&logoColor=white"></a>&nbsp;
+  <img src="https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge">
+</p>
 
 ---
 
@@ -22,7 +26,6 @@
 - [File Structure](#-file-structure)
 - [Dataset](#-dataset)
 - [Awards](#-awards)
-- [Contributing](#-contributing)
 - [License](#-license)
 
 ---
@@ -38,6 +41,8 @@ Given a cervical spine X-ray, the pipeline:
 4. Predicts **skeletal age** (XGBoost regression) and **biological sex** (Random Forest classification)
 5. Serves results via a **Flask REST API** to a **React frontend** with live segmentation overlay
 
+> 📸 **Demo:** *(drag-and-drop upload with live segmentation overlay — GIF coming soon)*
+
 ---
 
 ## 📊 Key Results
@@ -48,8 +53,8 @@ Given a cervical spine X-ray, the pipeline:
 | Skeletal age prediction | XGBoost | MAE | **5.87 years** |
 | Gender classification | Random Forest | AUC / Accuracy | **0.912 / 84%** |
 
-- Dataset: **1,294 clinical lateral cephalometric X-rays**
-- Features extracted: 79 morphological → SHAP-selected 23 (age) and 15 (gender)
+- **Dataset:** 1,294 clinical lateral cephalometric X-rays
+- **Features extracted:** 79 morphological → SHAP-selected 23 (age) and 15 (gender)
 
 ---
 
@@ -59,14 +64,16 @@ Given a cervical spine X-ray, the pipeline:
 Lateral Cephalometric X-ray
           │
           ▼
-  Attention U-Net
-  (C2, C3, C4 vertebrae segmentation)
-  Dice score: 0.94
+  ┌───────────────────┐
+  │  Attention U-Net  │  C2, C3, C4 vertebrae segmentation
+  │                   │  Dice score: 0.94
+  └───────────────────┘
           │
           ▼
-  79 Morphological Features
-  (height ratios, concavity indices,
-   vertebral body shapes per C2–C4)
+  ┌───────────────────┐
+  │  79 Morphological │  Height ratios, concavity indices,
+  │  Features         │  vertebral body shape descriptors
+  └───────────────────┘
           │
      ┌────┴────┐
      ▼         ▼
@@ -82,12 +89,15 @@ Lateral Cephalometric X-ray
      │         │
      └────┬────┘
           ▼
-  Flask REST API (/predict, /health)
+  ┌───────────────────┐
+  │  Flask REST API   │  /predict · /health endpoints
+  └───────────────────┘
           │
           ▼
-  React Frontend
-  (drag-and-drop upload · live segmentation
-   overlay · gender confidence score)
+  ┌───────────────────┐
+  │  React Frontend   │  Drag-and-drop upload · live segmentation
+  │  (cvm-frontend)   │  overlay · gender confidence score
+  └───────────────────┘
 ```
 
 ---
@@ -109,12 +119,12 @@ Lateral Cephalometric X-ray
 | Layer | Tools |
 |-------|-------|
 | Segmentation | PyTorch · Attention U-Net |
+| Feature extraction | OpenCV · NumPy |
 | Feature selection | SHAP |
 | Age prediction | XGBoost |
 | Gender classification | scikit-learn (Random Forest) |
-| Backend | Flask · Python |
+| Backend API | Flask · Python |
 | Frontend | React · Vite · Tailwind CSS |
-| Utilities | OpenCV · NumPy · Pandas · Matplotlib |
 
 ---
 
@@ -124,7 +134,7 @@ Lateral Cephalometric X-ray
 
 ```bash
 git clone https://github.com/ShettyShravya03/Machine-Learning-Driven-Skeletal-age-and-gender-prediction.git
-cd Machine-Learning-Driven-Skeletal-age-and-gender-prediction/backend
+cd Machine-Learning-Driven-Skeletal-age-and-gender-prediction
 
 pip install -r requirements.txt
 ```
@@ -134,7 +144,7 @@ pip install -r requirements.txt
 ### Frontend
 
 ```bash
-cd frontend
+cd cvm-frontend
 npm install
 ```
 
@@ -145,7 +155,6 @@ npm install
 ### 1. Start the Flask backend
 
 ```bash
-cd backend
 python app.py
 # Server runs at http://localhost:5000
 ```
@@ -153,14 +162,12 @@ python app.py
 ### 2. Start the React frontend
 
 ```bash
-cd frontend
+cd cvm-frontend
 npm run dev
 # App runs at http://localhost:5173
 ```
 
 ### 3. Use the API directly
-
-**Predict age and gender from an X-ray:**
 
 ```bash
 curl -X POST http://localhost:5000/predict \
@@ -178,26 +185,21 @@ curl -X POST http://localhost:5000/predict \
 }
 ```
 
-**Health check:**
-```bash
-curl http://localhost:5000/health
-```
-
 ---
 
 ## 🔍 Pipeline Details
 
 ### Stage 1 — Segmentation (Attention U-Net)
 
-The Attention U-Net is trained to segment the **C2, C3, and C4 cervical vertebrae** from lateral cephalometric X-rays. Attention gates suppress irrelevant background activations and focus on the vertebral body boundaries.
+The Attention U-Net segments the **C2, C3, and C4 cervical vertebrae** from lateral cephalometric X-rays. Attention gates suppress irrelevant background activations and focus on vertebral body boundaries.
 
 - **Input:** Grayscale X-ray (resized to 256×256)
-- **Output:** Binary segmentation masks per vertebra
+- **Output:** Binary segmentation masks per vertebra — via `binarymask.py`
 - **Dice score:** 0.94 on held-out test set
 
 ### Stage 2 — Feature Extraction
 
-79 morphological features are computed from the segmentation masks:
+79 morphological features are computed from the segmentation masks via `feature extraction.py`:
 - Vertebral body height and width ratios
 - Concavity index of the inferior border of C2
 - Ratio of anterior to posterior vertebral height
@@ -205,16 +207,19 @@ The Attention U-Net is trained to segment the **C2, C3, and C4 cervical vertebra
 
 ### Stage 3 — SHAP Feature Selection
 
-SHAP (SHapley Additive exPlanations) is used to rank feature importance and select the top features for each task, reducing overfitting and improving generalisability:
-- **Age model:** Top 23 features selected
-- **Gender model:** Top 15 features selected
+SHAP ranks feature importance and selects the top features for each task:
+- **Age model:** Top 23 features → `age_pred.py`
+- **Gender model:** Top 15 features → `gender_pred.py`
 
-### Stage 4 — Prediction Models
+### Stage 4 — Prediction & Inference
 
-| Model | Task | Why |
-|-------|------|-----|
-| XGBoost | Age regression | Handles non-linear feature interactions; robust to outliers in clinical data |
-| Random Forest | Gender classification | Strong ensemble method; interpretable feature importances |
+| Script | Task |
+|--------|------|
+| `age_pred.py` | XGBoost skeletal age regression |
+| `gender_pred.py` | Random Forest gender classification |
+| `cvm_inference.py` | End-to-end inference pipeline |
+| `unknown_pred.py` | Prediction on new unlabelled X-rays |
+| `model comparison.py` | Baseline model benchmarking |
 
 ---
 
@@ -222,38 +227,26 @@ SHAP (SHapley Additive exPlanations) is used to rank feature importance and sele
 
 ```
 .
-├── backend/
-│   ├── app.py                     # Flask REST API entry point
-│   ├── requirements.txt
-│   ├── model/
-│   │   ├── attention_unet.py      # U-Net architecture with attention gates
-│   │   ├── age_model.py           # XGBoost age regression pipeline
-│   │   └── gender_model.py        # Random Forest gender classification pipeline
-│   ├── utils/
-│   │   ├── feature_extraction.py  # 79 morphological features
-│   │   ├── shap_selection.py      # SHAP-based feature selector
-│   │   └── preprocessing.py       # Image normalisation, resizing
-│   └── checkpoints/
-│       └── best_unet.pt           # Trained Attention U-Net weights
-│
-├── frontend/
-│   ├── src/
-│   │   ├── App.jsx
-│   │   ├── components/
-│   │   │   ├── UploadZone.jsx         # Drag-and-drop X-ray upload
-│   │   │   ├── SegmentationView.jsx   # Live overlay display
-│   │   │   └── ResultCard.jsx         # Age + gender output card
-│   │   └── api/
-│   │       └── predict.js
+├── cvm-frontend/              # React frontend (Vite + Tailwind)
+│   ├── src/                   # React components and app logic
+│   ├── index.html
 │   ├── package.json
+│   ├── postcss.config.cjs
+│   ├── tailwind.config.js
 │   └── vite.config.js
-│
-├── notebooks/
-│   ├── 01_segmentation_training.ipynb
-│   ├── 02_feature_extraction.ipynb
-│   ├── 03_shap_selection.ipynb
-│   └── 04_model_training_evaluation.ipynb
-│
+├── LAST Dataset/              # Dataset directory (not tracked — see Dataset note)
+├── app.py                     # Flask REST API entry point
+├── cvm_inference.py           # End-to-end inference pipeline
+├── age_pred.py                # XGBoost age regression
+├── gender_pred.py             # Random Forest gender classification
+├── unknown_pred.py            # Prediction on new unlabelled samples
+├── feature extraction.py      # 79 morphological feature extractor
+├── binarymask.py              # Vertebrae segmentation mask generation
+├── model comparison.py        # Baseline model benchmarking
+├── best_age_model_name.txt    # Saved best age model identifier
+├── best_gender_model_name.txt # Saved best gender model identifier
+├── .gitignore
+├── LICENSE
 └── README.md
 ```
 
@@ -261,9 +254,9 @@ SHAP (SHapley Additive exPlanations) is used to rank feature importance and sele
 
 ## 📂 Dataset
 
-This project was trained and evaluated on a dataset of **1,294 lateral cephalometric X-rays** with ground-truth skeletal age and gender labels. The dataset was collected in accordance with ethical guidelines for clinical research.
+Trained and evaluated on **1,294 lateral cephalometric X-rays** with ground-truth skeletal age and gender labels, collected in accordance with ethical guidelines for clinical research.
 
-> **Note:** The dataset is not included in this repository due to patient privacy constraints. To reproduce results, a similarly annotated dataset of lateral cephalometric X-rays with CVM stage labels is required.
+> **Note:** The dataset is not included in this repository due to patient privacy constraints. A similarly annotated dataset of lateral cephalometric X-rays with CVM stage labels is required to reproduce results.
 
 ---
 
@@ -271,17 +264,8 @@ This project was trained and evaluated on a dataset of **1,294 lateral cephalome
 
 **Best Project of the Year — Commendation Prize**
 Issued by EXPRO 2025-26, NMAM Institute of Technology · April 2026
-*Awarded at the Final Year Students' Project Exhibition & Competition.*
 
----
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch: `git checkout -b feature/your-feature`
-3. Commit your changes: `git commit -m "add: your feature description"`
-4. Push to the branch: `git push origin feature/your-feature`
-5. Open a pull request
+*Awarded at the Final Year Students' Project Exhibition & Competition for ML-Driven Skeletal Age & Gender Prediction using Cervical Vertebral Maturation.*
 
 ---
 
