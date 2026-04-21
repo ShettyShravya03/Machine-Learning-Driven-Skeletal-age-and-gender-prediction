@@ -1,0 +1,125 @@
+<svg width="900" height="220" viewBox="0 0 900 220" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0a0800"/>
+      <stop offset="35%" stop-color="#12100a"/>
+      <stop offset="65%" stop-color="#1a1408"/>
+      <stop offset="100%" stop-color="#0a0800"/>
+    </linearGradient>
+    <pattern id="grid" width="30" height="30" patternUnits="userSpaceOnUse">
+      <path d="M 30 0 L 0 0 0 30" fill="none" stroke="#b45309" stroke-width="0.3" opacity="0.15"/>
+    </pattern>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="1.5" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="glow2">
+      <feGaussianBlur stdDeviation="8" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="soften">
+      <feGaussianBlur stdDeviation="1.5"/>
+    </filter>
+  </defs>
+  <style>
+    .v1{opacity:0;animation:fv 0.7s ease 0.0s forwards;}
+    .v2{opacity:0;animation:fv 0.7s ease 0.15s forwards;}
+    .v3{opacity:0;animation:fv 0.7s ease 0.3s forwards;}
+    .t1{animation:fu 0.9s ease 0.2s forwards;opacity:0;}
+    .t2{animation:fu 0.9s ease 0.45s forwards;opacity:0;}
+    .t3{animation:fu 0.9s ease 0.65s forwards;opacity:0;}
+    .s1{animation:fu 0.9s ease 0.85s forwards;opacity:0;}
+    .s2{animation:fu 0.9s ease 1.0s forwards;opacity:0;}
+    .s3{animation:fu 0.9s ease 1.15s forwards;opacity:0;}
+    @keyframes fv{from{opacity:0;}to{opacity:1;}}
+    @keyframes fu{from{opacity:0;transform:translateY(5px);}to{opacity:1;transform:translateY(0);}}
+    .scan{animation:scanline 3.5s ease 0.5s forwards;}
+    @keyframes scanline{from{transform:translateX(-5px);opacity:0.6;}to{transform:translateX(910px);opacity:0;}}
+  </style>
+
+  <rect width="900" height="220" fill="url(#bg)"/>
+  <rect width="900" height="220" fill="url(#grid)"/>
+
+  <!-- Warm glow orbs simulating X-ray viewer light -->
+  <ellipse cx="450" cy="90" rx="260" ry="75" fill="#92400e" opacity="0.06" filter="url(#glow2)"/>
+  <circle cx="150" cy="90" r="55" fill="#d97706" opacity="0.05" filter="url(#glow2)"/>
+  <circle cx="750" cy="90" r="55" fill="#d97706" opacity="0.05" filter="url(#glow2)"/>
+
+  <!-- Scan line sweep on load -->
+  <rect class="scan" x="-5" y="0" width="4" height="220" fill="#f59e0b" opacity="0.4"/>
+
+  <!-- Vertebra silhouettes — C2, C3, C4 — LEFT, vertical stack -->
+  <g class="v1" transform="translate(30, 12)" opacity="0.6" filter="url(#glow)">
+    <rect x="0" y="0" width="48" height="26" rx="4" fill="none" stroke="#f59e0b" stroke-width="1.2"/>
+    <rect x="8" y="5" width="32" height="16" rx="2" fill="#f59e0b" opacity="0.08"/>
+    <line x1="24" y1="26" x2="24" y2="40" stroke="#f59e0b" stroke-width="1" opacity="0.4"/>
+    <text x="24" y="17" font-family="monospace" font-size="7" fill="#fcd34d" text-anchor="middle" opacity="0.8">C2</text>
+  </g>
+  <g class="v2" transform="translate(26, 58)" opacity="0.6" filter="url(#glow)">
+    <rect x="0" y="0" width="56" height="26" rx="3" fill="none" stroke="#f59e0b" stroke-width="1.2"/>
+    <rect x="8" y="5" width="40" height="16" rx="2" fill="#f59e0b" opacity="0.08"/>
+    <line x1="28" y1="0" x2="28" y2="-6" stroke="#f59e0b" stroke-width="1" opacity="0.4"/>
+    <line x1="28" y1="26" x2="28" y2="40" stroke="#f59e0b" stroke-width="1" opacity="0.4"/>
+    <text x="28" y="17" font-family="monospace" font-size="7" fill="#fcd34d" text-anchor="middle" opacity="0.8">C3</text>
+  </g>
+  <g class="v3" transform="translate(22, 104)" opacity="0.6" filter="url(#glow)">
+    <rect x="0" y="0" width="64" height="26" rx="3" fill="none" stroke="#f59e0b" stroke-width="1.2"/>
+    <rect x="8" y="5" width="48" height="16" rx="2" fill="#f59e0b" opacity="0.08"/>
+    <line x1="32" y1="0" x2="32" y2="-6" stroke="#f59e0b" stroke-width="1" opacity="0.4"/>
+    <text x="32" y="17" font-family="monospace" font-size="7" fill="#fcd34d" text-anchor="middle" opacity="0.8">C4</text>
+  </g>
+
+  <!-- Vertebra silhouettes — C2, C3, C4 — RIGHT, vertical stack (mirrored) -->
+  <g class="v1" transform="translate(822, 12)" opacity="0.6" filter="url(#glow)">
+    <rect x="0" y="0" width="48" height="26" rx="4" fill="none" stroke="#f59e0b" stroke-width="1.2"/>
+    <rect x="8" y="5" width="32" height="16" rx="2" fill="#f59e0b" opacity="0.08"/>
+    <line x1="24" y1="26" x2="24" y2="40" stroke="#f59e0b" stroke-width="1" opacity="0.4"/>
+    <text x="24" y="17" font-family="monospace" font-size="7" fill="#fcd34d" text-anchor="middle" opacity="0.8">C2</text>
+  </g>
+  <g class="v2" transform="translate(818, 58)" opacity="0.6" filter="url(#glow)">
+    <rect x="0" y="0" width="56" height="26" rx="3" fill="none" stroke="#f59e0b" stroke-width="1.2"/>
+    <rect x="8" y="5" width="40" height="16" rx="2" fill="#f59e0b" opacity="0.08"/>
+    <line x1="28" y1="0" x2="28" y2="-6" stroke="#f59e0b" stroke-width="1" opacity="0.4"/>
+    <line x1="28" y1="26" x2="28" y2="40" stroke="#f59e0b" stroke-width="1" opacity="0.4"/>
+    <text x="28" y="17" font-family="monospace" font-size="7" fill="#fcd34d" text-anchor="middle" opacity="0.8">C3</text>
+  </g>
+  <g class="v3" transform="translate(814, 104)" opacity="0.6" filter="url(#glow)">
+    <rect x="0" y="0" width="64" height="26" rx="3" fill="none" stroke="#f59e0b" stroke-width="1.2"/>
+    <rect x="8" y="5" width="48" height="16" rx="2" fill="#f59e0b" opacity="0.08"/>
+    <line x1="32" y1="0" x2="32" y2="-6" stroke="#f59e0b" stroke-width="1" opacity="0.4"/>
+    <text x="32" y="17" font-family="monospace" font-size="7" fill="#fcd34d" text-anchor="middle" opacity="0.8">C4</text>
+  </g>
+
+  <!-- Main title -->
+  <text class="t1" x="450" y="75"
+    font-family="'Arial Black', Impact, sans-serif"
+    font-size="22" font-weight="900" fill="white"
+    text-anchor="middle" letter-spacing="3">ML-DRIVEN SKELETAL AGE &amp; GENDER PREDICTION</text>
+
+  <!-- Subtitle -->
+  <text class="t2" x="450" y="100"
+    font-family="Arial, sans-serif" font-size="12.5" fill="#fcd34d"
+    text-anchor="middle" letter-spacing="2">Cervical Vertebral Maturation · Attention U-Net · XGBoost · Flask · React</text>
+
+  <!-- Divider -->
+  <line x1="195" y1="118" x2="705" y2="118" stroke="#b45309" stroke-width="0.5" opacity="0.5"/>
+
+  <!-- Stats -->
+  <text class="s1" x="285" y="140" font-family="monospace" font-size="11" fill="#f59e0b" text-anchor="middle" font-weight="700">Dice 0.94</text>
+  <text class="s1" x="285" y="155" font-family="monospace" font-size="9" fill="#78350f" text-anchor="middle">Attention U-Net</text>
+
+  <line x1="365" y1="126" x2="365" y2="162" stroke="#44200a" stroke-width="0.5"/>
+
+  <text class="s2" x="450" y="140" font-family="monospace" font-size="11" fill="#f59e0b" text-anchor="middle" font-weight="700">MAE 5.87 yrs · AUC 0.912</text>
+  <text class="s2" x="450" y="155" font-family="monospace" font-size="9" fill="#78350f" text-anchor="middle">XGBoost · Random Forest · 1,294 X-rays</text>
+
+  <line x1="535" y1="126" x2="535" y2="162" stroke="#44200a" stroke-width="0.5"/>
+
+  <text class="s3" x="618" y="140" font-family="monospace" font-size="11" fill="#f59e0b" text-anchor="middle" font-weight="700">🏆 Best Project 2025-26</text>
+  <text class="s3" x="618" y="155" font-family="monospace" font-size="9" fill="#78350f" text-anchor="middle">EXPRO · NMAMIT</text>
+
+  <!-- Bottom tag -->
+  <text class="t3" x="450" y="208"
+    font-family="'Courier New', monospace" font-size="9.5"
+    fill="#44200a" text-anchor="middle" letter-spacing="1.5">NMAM INSTITUTE OF TECHNOLOGY  ·  FINAL YEAR PROJECT  ·  2025–26</text>
+</svg>
