@@ -10,7 +10,24 @@
 
 ---
 
-## Overview
+## 📋 Table of Contents
+- [Overview](#-overview)
+- [Key Results](#-key-results)
+- [Architecture](#-architecture)
+- [Features](#-features)
+- [Tech Stack](#️-tech-stack)
+- [Installation](#-installation)
+- [Usage](#-usage)
+- [Pipeline Details](#-pipeline-details)
+- [File Structure](#-file-structure)
+- [Dataset](#-dataset)
+- [Awards](#-awards)
+- [Contributing](#-contributing)
+- [License](#-license)
+
+---
+
+## 🎯 Overview
 
 A full end-to-end computer vision pipeline for **orthodontic skeletal maturity assessment** from lateral cephalometric X-rays. The system automates a clinical workflow that traditionally requires ~15 minutes of manual measurement by an orthodontist, reducing it to **under 2 minutes** with comparable accuracy.
 
@@ -23,7 +40,7 @@ Given a cervical spine X-ray, the pipeline:
 
 ---
 
-## Results
+## 📊 Key Results
 
 | Task | Model | Metric | Score |
 |------|-------|--------|-------|
@@ -36,7 +53,7 @@ Given a cervical spine X-ray, the pipeline:
 
 ---
 
-## Architecture
+## 🧠 Architecture
 
 ```
 Lateral Cephalometric X-ray
@@ -75,7 +92,19 @@ Lateral Cephalometric X-ray
 
 ---
 
-## Tech Stack
+## ✨ Features
+
+- **Attention U-Net segmentation** — automatically isolates C2, C3, C4 vertebrae with Dice score 0.94
+- **79 morphological features** — height ratios, concavity indices, shape descriptors per vertebra
+- **SHAP feature selection** — reduces overfitting by selecting only the most predictive features per task
+- **Dual-output prediction** — simultaneous skeletal age regression and gender classification
+- **Flask REST API** — `/predict` and `/health` endpoints for integration
+- **React frontend** — drag-and-drop X-ray upload, live segmentation overlay, gender confidence score display
+- **Clinical time reduction** — from ~15 minutes manual assessment to under 2 minutes
+
+---
+
+## 🛠️ Tech Stack
 
 | Layer | Tools |
 |-------|-------|
@@ -89,7 +118,7 @@ Lateral Cephalometric X-ray
 
 ---
 
-## Installation
+## 🔧 Installation
 
 ### Backend
 
@@ -100,7 +129,7 @@ cd Machine-Learning-Driven-Skeletal-age-and-gender-prediction/backend
 pip install -r requirements.txt
 ```
 
-**Key dependencies:** `torch`, `torchvision`, `xgboost`, `scikit-learn`, `shap`, `flask`, `opencv-python`, `numpy`, `pandas`
+**Key dependencies:** `torch` `torchvision` `xgboost` `scikit-learn` `shap` `flask` `opencv-python` `numpy` `pandas`
 
 ### Frontend
 
@@ -111,7 +140,7 @@ npm install
 
 ---
 
-## Usage
+## 🚀 Usage
 
 ### 1. Start the Flask backend
 
@@ -156,7 +185,7 @@ curl http://localhost:5000/health
 
 ---
 
-## Pipeline Details
+## 🔍 Pipeline Details
 
 ### Stage 1 — Segmentation (Attention U-Net)
 
@@ -189,31 +218,31 @@ SHAP (SHapley Additive exPlanations) is used to rank feature importance and sele
 
 ---
 
-## File Structure
+## 📁 File Structure
 
 ```
 .
 ├── backend/
-│   ├── app.py                  # Flask REST API entry point
+│   ├── app.py                     # Flask REST API entry point
 │   ├── requirements.txt
 │   ├── model/
-│   │   ├── attention_unet.py   # U-Net architecture with attention gates
-│   │   ├── age_model.py        # XGBoost age regression pipeline
-│   │   └── gender_model.py     # Random Forest gender classification pipeline
+│   │   ├── attention_unet.py      # U-Net architecture with attention gates
+│   │   ├── age_model.py           # XGBoost age regression pipeline
+│   │   └── gender_model.py        # Random Forest gender classification pipeline
 │   ├── utils/
 │   │   ├── feature_extraction.py  # 79 morphological features
 │   │   ├── shap_selection.py      # SHAP-based feature selector
 │   │   └── preprocessing.py       # Image normalisation, resizing
 │   └── checkpoints/
-│       └── best_unet.pt        # Trained Attention U-Net weights
+│       └── best_unet.pt           # Trained Attention U-Net weights
 │
 ├── frontend/
 │   ├── src/
 │   │   ├── App.jsx
 │   │   ├── components/
-│   │   │   ├── UploadZone.jsx      # Drag-and-drop X-ray upload
-│   │   │   ├── SegmentationView.jsx # Live overlay display
-│   │   │   └── ResultCard.jsx       # Age + gender output card
+│   │   │   ├── UploadZone.jsx         # Drag-and-drop X-ray upload
+│   │   │   ├── SegmentationView.jsx   # Live overlay display
+│   │   │   └── ResultCard.jsx         # Age + gender output card
 │   │   └── api/
 │   │       └── predict.js
 │   ├── package.json
@@ -230,7 +259,7 @@ SHAP (SHapley Additive exPlanations) is used to rank feature importance and sele
 
 ---
 
-## Dataset
+## 📂 Dataset
 
 This project was trained and evaluated on a dataset of **1,294 lateral cephalometric X-rays** with ground-truth skeletal age and gender labels. The dataset was collected in accordance with ethical guidelines for clinical research.
 
@@ -238,7 +267,7 @@ This project was trained and evaluated on a dataset of **1,294 lateral cephalome
 
 ---
 
-## Awards
+## 🏆 Awards
 
 **Best Project of the Year — Commendation Prize**
 Issued by EXPRO 2025-26, NMAM Institute of Technology · April 2026
@@ -246,7 +275,7 @@ Issued by EXPRO 2025-26, NMAM Institute of Technology · April 2026
 
 ---
 
-## Contributing
+## 🤝 Contributing
 
 1. Fork the repository
 2. Create a feature branch: `git checkout -b feature/your-feature`
@@ -256,12 +285,6 @@ Issued by EXPRO 2025-26, NMAM Institute of Technology · April 2026
 
 ---
 
-## License
+## 📜 License
 
 MIT © 2026 Shravya S Shetty
-
----
-
-## Topics
-
-`computer-vision` `pytorch` `attention-unet` `xgboost` `shap` `explainable-ai` `flask` `react` `medical-imaging` `skeletal-age-prediction` `python` `deep-learning` `orthodontics` `cervical-vertebral-maturation`
