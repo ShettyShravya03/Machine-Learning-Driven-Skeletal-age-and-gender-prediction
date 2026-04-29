@@ -672,3 +672,10 @@ print(f"      F1   = {best_gen_row['F1 (weighted)']:.3f}")
 print(f"      AUC  = {best_gen_row['ROC-AUC']:.3f}")
 print("=" * 65)
 print("\n✅  All done.")
+
+from sklearn.dummy import DummyRegressor
+dummy = DummyRegressor(strategy="mean")
+dummy.fit(X_a_tr_sel, y_a_tr)
+baseline_mae = mean_absolute_error(y_a_te, dummy.predict(X_a_te_sel))
+print(f"Baseline (mean predictor) MAE: {baseline_mae:.3f} yrs")
+print(f"Your model improvement: {baseline_mae - 5.875:.3f} yrs")
