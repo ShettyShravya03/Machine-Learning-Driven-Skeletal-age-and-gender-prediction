@@ -1,11 +1,10 @@
 """
-Vertebrae Binary Mask Generator for Google Colab
-Extracts C2, C3, C4 vertebrae from color-annotated images
+Vertebrae Binary Mask Generator
+Extracts C2, C3, C4 vertebrae from color-annotated X-ray images
+and outputs clean binary masks for segmentation training.
 
-Usage in Colab:
-1. Upload this script
-2. Mount Google Drive or upload your images
-3. Run the script with your folder paths
+Took a while to get the color ranges right — HSV is finicky.
+Red especially wraps around in HSV so needs two ranges.
 """
 
 import cv2
@@ -14,38 +13,48 @@ import os
 from pathlib import Path
 import matplotlib.pyplot as plt
 
+
 # ===========================
 # CONFIGURATION
 # ===========================
 
-# Set your folder paths here
-RAW_FOLDER = r"LAST Dataset\TESTIMG"           # Raw images folder
-ANNOTATED_FOLDER = r"LAST Dataset\SEGIMG_NEW"      # Annotated images folder
-OUTPUT_FOLDER = r"LAST Dataset\BINIMG2"           # Output folder for binary masks
+RAW_FOLDER = r"LAST Dataset\TESTIMG"
+ANNOTATED_FOLDER = r"LAST Dataset\SEGIMG_NEW"
+OUTPUT_FOLDER = r"LAST Dataset\BINIMG2"
 
-# Color ranges in HSV for each vertebra
-# Purple for C2
+# HSV ranges — tuned manually by eyeballing misclassified masks
+# small saturation/value floor of 50 to ignore near-white/black noise
+
+# C2 = purple
 C2_LOWER = np.array([130, 50, 50])
 C2_UPPER = np.array([170, 255, 255])
 
-# Red for C3 (two ranges due to HSV wraparound)
+# C3 = red — red wraps around 0° in HSV so needs two ranges
+# missed a lot of C3 until I added the second range
 C3_LOWER_1 = np.array([0, 50, 50])
 C3_UPPER_1 = np.array([10, 255, 255])
 C3_LOWER_2 = np.array([170, 50, 50])
 C3_UPPER_2 = np.array([180, 255, 255])
 
-# Cyan for C4
+# C4 = cyan
 C4_LOWER = np.array([80, 50, 50])
 C4_UPPER = np.array([100, 255, 255])
 
-# Processing parameters
-MIN_COMPONENT_AREA = 500      # Minimum area to keep — raised to filter small blobs like corner circles
-BORDER_THICKNESS = 5          # Border artifact removal thickness
-SPATIAL_OUTLIER_FACTOR = 0.35 # Components whose centroid is more than this fraction of image
-                               # diagonal away from the median centroid are dropped
-BORDER_EROSION_PX = 3         # Pixels to erode from each filled vertebra BEFORE combining.
-                               # Strips the annotation border line so adjacent vertebrae
-                               # don't touch/merge. Increase if annotation borders are thicker.
+# 500 worked well — anything smaller was catching
+# annotation corner circles and scan artifacts
+MIN_COMPONENT_AREA = 500
+
+# 5px covers the collimator edges in most scans
+BORDER_THICKNESS = 5
+
+# 0.35 × diagonal = generous enough to keep all three vertebrae
+# but drops truly stray blobs. went higher (0.5) first,
+# was keeping too many artifacts
+SPATIAL_OUTLIER_FACTOR = 0.35
+
+# annotation borders are ~3px thick in our dataset
+# eroding before merging stops adjacent vertebrae from touching
+BORDER_EROSION_PX = 3
 
 
 # ===========================
@@ -53,73 +62,85 @@ BORDER_EROSION_PX = 3         # Pixels to erode from each filled vertebra BEFORE
 # ===========================
 
 def extract_color_mask(hsv_image, lower, upper):
-    """Extract mask for a specific color range"""
+    # straightforward HSV threshold
+    # doing this in HSV not BGR because BGR ranges
+    # for the same color vary too much across scans
     return cv2.inRange(hsv_image, lower, upper)
 
 
 def fill_vertebra(mask):
-    """Fill holes in vertebra mask using contour filling"""
-    contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    # annotation only draws the border, not the fill
+    # need filled regions to extract morphological features later
+    contours, _ = cv2.findContours(
+        mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE
+    )
     filled = np.zeros_like(mask)
     for contour in contours:
-        cv2.drawContours(filled, [contour], -1, 255, thickness=cv2.FILLED)
+        cv2.drawContours(filled, [contour], -1, 255,
+                         thickness=cv2.FILLED)
     return filled
 
 
 def strip_annotation_border(filled_mask, erosion_px=BORDER_EROSION_PX):
     """
-    Erode a single filled vertebra mask to remove the annotation border line.
+    Erodes each filled vertebra mask before combining them.
 
-    Why per-vertebra erosion before combining:
-      - The colored annotation is a thick drawn border, not just a 1-px outline.
-      - When two vertebrae sit close together their border pixels overlap/touch
-        after filling, causing them to merge into one blob in the combined mask.
-      - Eroding each vertebra individually BEFORE the bitwise_or merge shrinks
-        every shape inward by `erosion_px` pixels, creating a guaranteed gap
-        between adjacent vertebrae.
-      - Using MORPH_ELLIPSE avoids sharp corners that rectangular kernels produce.
+    The annotation tool draws a thick colored border (~3px).
+    After filling, adjacent vertebrae sit close enough that
+    their borders touch — they merge into one blob in the combined mask,
+    which kills the feature extraction downstream.
+
+    Eroding per vertebra BEFORE the bitwise_or merge creates a
+    guaranteed gap between them. MORPH_ELLIPSE avoids the
+    sharp corners that a rectangular kernel leaves behind.
+
+    Tried doing this after combining — didn't work,
+    the merged blob erodes as one shape and you lose
+    the individual vertebra boundaries entirely.
     """
     kernel = cv2.getStructuringElement(
-        cv2.MORPH_ELLIPSE, (2 * erosion_px + 1, 2 * erosion_px + 1)
+        cv2.MORPH_ELLIPSE,
+        (2 * erosion_px + 1, 2 * erosion_px + 1)
     )
     return cv2.erode(filled_mask, kernel, iterations=1)
 
 
 def remove_small_components(mask, min_area=100):
-    """Remove small connected components (noise)"""
-    num_labels, labels, stats, _ = cv2.connectedComponentsWithStats(mask, connectivity=8)
+    # connected components gives us individual blobs
+    # anything under min_area is noise — corner dots,
+    # annotation artifacts, scan dust
+    num_labels, labels, stats, _ = cv2.connectedComponentsWithStats(
+        mask, connectivity=8
+    )
     cleaned = np.zeros_like(mask)
-
-    for i in range(1, num_labels):
+    for i in range(1, num_labels):  # skip 0 = background
         area = stats[i, cv2.CC_STAT_AREA]
         if area >= min_area:
             cleaned[labels == i] = 255
-
     return cleaned
 
 
 def remove_border_artifacts(mask, border_thickness=5):
-    """Remove components touching the image border"""
+    # anything touching the image edge is almost certainly
+    # not a vertebra — collimator edges, scan frame artifacts
     h, w = mask.shape
 
-    # Create border mask
     border_mask = np.zeros_like(mask)
     border_mask[:border_thickness, :] = 255
     border_mask[-border_thickness:, :] = 255
     border_mask[:, :border_thickness] = 255
     border_mask[:, -border_thickness:] = 255
 
-    # Find components
-    num_labels, labels, _, _ = cv2.connectedComponentsWithStats(mask, connectivity=8)
+    num_labels, labels, _, _ = cv2.connectedComponentsWithStats(
+        mask, connectivity=8
+    )
 
-    # Identify border-touching labels
     border_labels = set()
     for i in range(1, num_labels):
         component_mask = (labels == i).astype(np.uint8) * 255
         if cv2.bitwise_and(component_mask, border_mask).any():
             border_labels.add(i)
 
-    # Create clean mask
     cleaned = np.zeros_like(mask)
     for i in range(1, num_labels):
         if i not in border_labels:
@@ -130,39 +151,39 @@ def remove_border_artifacts(mask, border_thickness=5):
 
 def remove_spatial_outliers(mask, outlier_factor=SPATIAL_OUTLIER_FACTOR):
     """
-    Remove components whose centroid is spatially isolated from the main vertebrae cluster.
+    Drops blobs whose centroid is too far from the vertebra cluster.
 
-    Strategy:
-      1. Find the centroid of every connected component.
-      2. Compute the median centroid across all components (robust center estimate).
-      3. Compute the image diagonal as a reference distance scale.
-      4. Drop any component whose centroid is farther than
-         (outlier_factor × diagonal) from the median centroid.
+    Some annotated images had a small reference circle in the corner
+    that survived area filtering (it was big enough).
+    Area-based removal wasn't reliable — circle size varied per scan.
 
-    This eliminates stray blobs (like the corner circle) without using
-    area ranking or any assumption about which vertebra is biggest.
+    This approach finds the median centroid of all surviving blobs
+    and drops anything too far from it. Works because C2/C3/C4
+    are always spatially clustered — stray blobs are outliers.
+
+    Using median not mean because one big outlier would pull
+    the mean toward it and cause us to drop a real vertebra instead.
     """
-    num_labels, labels, stats, centroids = cv2.connectedComponentsWithStats(mask, connectivity=8)
+    num_labels, labels, stats, centroids = \
+        cv2.connectedComponentsWithStats(mask, connectivity=8)
 
-    if num_labels <= 1:          # Nothing but background
-        return mask
+    if num_labels <= 1:
+        return mask  # nothing to filter
 
     h, w = mask.shape
     diagonal = np.sqrt(h**2 + w**2)
     max_dist = outlier_factor * diagonal
 
-    # Centroids of foreground components (skip label 0 = background)
-    fg_centroids = centroids[1:]          # shape: (N, 2)  [cx, cy]
-    fg_labels    = np.arange(1, num_labels)
+    fg_centroids = centroids[1:]  # skip background label 0
+    fg_labels = np.arange(1, num_labels)
 
     if len(fg_centroids) == 0:
         return mask
 
-    # Robust centre: median of all component centroids
+    # median is robust — one stray blob doesn't shift it much
     median_cx = np.median(fg_centroids[:, 0])
     median_cy = np.median(fg_centroids[:, 1])
 
-    # Keep only components within max_dist of the median centroid
     cleaned = np.zeros_like(mask)
     for label, (cx, cy) in zip(fg_labels, fg_centroids):
         dist = np.sqrt((cx - median_cx)**2 + (cy - median_cy)**2)
@@ -173,60 +194,63 @@ def remove_spatial_outliers(mask, outlier_factor=SPATIAL_OUTLIER_FACTOR):
 
 
 def process_single_image(annotated_path, output_path):
-    """Process a single annotated image to extract vertebrae mask"""
-    # Read annotated image
     annotated_img = cv2.imread(annotated_path)
     if annotated_img is None:
         return False, "Could not read image"
 
-    # Convert to HSV
     hsv = cv2.cvtColor(annotated_img, cv2.COLOR_BGR2HSV)
 
-    # Extract C2 (purple) — fill then strip the border line
+    # extract each vertebra, fill, then strip border BEFORE combining
+    # order matters — strip first, combine second
     c2_mask = extract_color_mask(hsv, C2_LOWER, C2_UPPER)
     c2_filled = strip_annotation_border(fill_vertebra(c2_mask))
 
-    # Extract C3 (red - combine two ranges) — fill then strip the border line
+    # C3 needs two masks because red wraps around in HSV
     c3_mask_1 = extract_color_mask(hsv, C3_LOWER_1, C3_UPPER_1)
     c3_mask_2 = extract_color_mask(hsv, C3_LOWER_2, C3_UPPER_2)
     c3_mask = cv2.bitwise_or(c3_mask_1, c3_mask_2)
     c3_filled = strip_annotation_border(fill_vertebra(c3_mask))
 
-    # Extract C4 (cyan) — fill then strip the border line
     c4_mask = extract_color_mask(hsv, C4_LOWER, C4_UPPER)
     c4_filled = strip_annotation_border(fill_vertebra(c4_mask))
 
-    # Combine all vertebrae
+    # merge all three vertebrae into one binary mask
     combined_mask = cv2.bitwise_or(c2_filled, c3_filled)
     combined_mask = cv2.bitwise_or(combined_mask, c4_filled)
 
-    # Morphological cleaning
+    # closing fills tiny gaps between pixels from the HSV threshold
     kernel_small = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3))
-    combined_mask = cv2.morphologyEx(combined_mask, cv2.MORPH_CLOSE, kernel_small)
+    combined_mask = cv2.morphologyEx(
+        combined_mask, cv2.MORPH_CLOSE, kernel_small
+    )
 
-    # Remove small noise
-    combined_mask = remove_small_components(combined_mask, min_area=MIN_COMPONENT_AREA)
+    # cleaning pipeline — order matters here too
+    # small components first, then border, then spatial outliers
+    combined_mask = remove_small_components(
+        combined_mask, min_area=MIN_COMPONENT_AREA
+    )
+    combined_mask = remove_border_artifacts(
+        combined_mask, border_thickness=BORDER_THICKNESS
+    )
+    combined_mask = remove_spatial_outliers(
+        combined_mask, outlier_factor=SPATIAL_OUTLIER_FACTOR
+    )
 
-    # Remove border artifacts
-    combined_mask = remove_border_artifacts(combined_mask, border_thickness=BORDER_THICKNESS)
+    # final opening removes single-pixel noise that survived everything else
+    combined_mask = cv2.morphologyEx(
+        combined_mask, cv2.MORPH_OPEN, kernel_small
+    )
 
-    # Remove spatially isolated blobs (e.g. corner circles, stray annotations)
-    combined_mask = remove_spatial_outliers(combined_mask, outlier_factor=SPATIAL_OUTLIER_FACTOR)
-
-    # Final opening
-    combined_mask = cv2.morphologyEx(combined_mask, cv2.MORPH_OPEN, kernel_small)
-
-    # Ensure binary output (0 and 255)
+    # force strict binary — some morphological ops leave 254s
     combined_mask = (combined_mask > 0).astype(np.uint8) * 255
 
-    # Save mask
     cv2.imwrite(output_path, combined_mask)
-
     return True, "Success"
 
 
 def visualize_sample(annotated_path, mask_path):
-    """Visualize annotated image and generated mask side by side"""
+    # quick sanity check — always run this on a few samples
+    # before trusting the full batch output
     annotated = cv2.imread(annotated_path)
     mask = cv2.imread(mask_path, cv2.IMREAD_GRAYSCALE)
 
@@ -234,12 +258,9 @@ def visualize_sample(annotated_path, mask_path):
         print("Error loading images for visualization")
         return
 
-    # Convert BGR to RGB for matplotlib
     annotated_rgb = cv2.cvtColor(annotated, cv2.COLOR_BGR2RGB)
 
-    # Create figure
     fig, axes = plt.subplots(1, 2, figsize=(12, 6))
-
     axes[0].imshow(annotated_rgb)
     axes[0].set_title('Annotated Image', fontsize=14, fontweight='bold')
     axes[0].axis('off')
@@ -257,30 +278,26 @@ def visualize_sample(annotated_path, mask_path):
 # ===========================
 
 def process_batch():
-    """Process all images in the annotated folder"""
-
-    # Create output directory
     Path(OUTPUT_FOLDER).mkdir(parents=True, exist_ok=True)
 
-    # Get list of images
     image_extensions = {'.png', '.jpg', '.jpeg', '.bmp', '.tif', '.tiff'}
-    image_files = [f for f in os.listdir(ANNOTATED_FOLDER)
-                   if Path(f).suffix.lower() in image_extensions]
+    image_files = [
+        f for f in os.listdir(ANNOTATED_FOLDER)
+        if Path(f).suffix.lower() in image_extensions
+    ]
 
     if not image_files:
-        print("❌ No images found in annotated folder!")
+        print("No images found in annotated folder")
         return
 
-    print("="*60)
+    print("=" * 60)
     print("VERTEBRAE MASK EXTRACTION")
-    print("="*60)
-    print(f"Annotated folder: {ANNOTATED_FOLDER}")
-    print(f"Output folder: {OUTPUT_FOLDER}")
-    print(f"Total images: {len(image_files)}")
-    print("="*60)
-    print()
+    print("=" * 60)
+    print(f"Annotated: {ANNOTATED_FOLDER}")
+    print(f"Output:    {OUTPUT_FOLDER}")
+    print(f"Images:    {len(image_files)}")
+    print("=" * 60)
 
-    # Process each image
     success_count = 0
     failed_count = 0
     failed_files = []
@@ -289,35 +306,29 @@ def process_batch():
         annotated_path = os.path.join(ANNOTATED_FOLDER, image_file)
         output_path = os.path.join(OUTPUT_FOLDER, image_file)
 
-        success, message = process_single_image(annotated_path, output_path)
+        success, message = process_single_image(
+            annotated_path, output_path
+        )
 
         if success:
             print(f"[{idx}/{len(image_files)}] ✓ {image_file}")
             success_count += 1
         else:
-            print(f"[{idx}/{len(image_files)}] ❌ {image_file} - {message}")
+            print(f"[{idx}/{len(image_files)}] ✗ {image_file} — {message}")
             failed_count += 1
             failed_files.append(image_file)
 
-    # Print summary
     print()
-    print("="*60)
-    print("PROCESSING COMPLETE")
-    print("="*60)
-    print(f"Total images: {len(image_files)}")
-    print(f"✓ Successfully processed: {success_count}")
-    print(f"❌ Failed: {failed_count}")
-
+    print("=" * 60)
+    print(f"Done: {success_count} succeeded, {failed_count} failed")
     if failed_files:
-        print("\nFailed files:")
+        print("Failed files:")
         for f in failed_files:
-            print(f"  - {f}")
+            print(f"  {f}")
+    print("=" * 60)
 
-    print("="*60)
-
-    # Show sample visualization
+    # always visualize at least one — catches bad color range issues early
     if success_count > 0:
-        print("\nGenerating sample visualization...")
         sample_file = image_files[0]
         visualize_sample(
             os.path.join(ANNOTATED_FOLDER, sample_file),
@@ -326,22 +337,12 @@ def process_batch():
 
 
 # ===========================
-# RUN PROCESSING
+# RUN
 # ===========================
 
 if __name__ == "__main__":
-    print("\n🔬 Vertebrae Binary Mask Generator")
-    print("=" * 60)
-
-    # Check if folders exist
     if not os.path.exists(ANNOTATED_FOLDER):
-        print(f"❌ Error: Annotated folder not found: {ANNOTATED_FOLDER}")
-        print("\nPlease:")
-        print("1. Upload your annotated images to Colab")
-        print("2. Update ANNOTATED_FOLDER path in the script")
-        print("3. Run again")
+        print(f"Annotated folder not found: {ANNOTATED_FOLDER}")
+        print("Update ANNOTATED_FOLDER path and rerun")
     else:
-        # Process all images
         process_batch()
-
-        print("\n✅ Done! Check the BINMASK folder for your binary masks.")
