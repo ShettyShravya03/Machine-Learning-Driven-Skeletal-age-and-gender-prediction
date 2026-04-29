@@ -3,7 +3,7 @@ Vertebrae Binary Mask Generator
 Extracts C2, C3, C4 vertebrae from color-annotated X-ray images
 and outputs clean binary masks for segmentation training.
 
-Took a while to get the color ranges right — HSV is finicky.
+Took a while to get the color ranges right — HSV is choosy.
 Red especially wraps around in HSV so needs two ranges.
 """
 
