@@ -89,8 +89,8 @@ class ConvBlock(nn.Module):
 class AttentionBlock(nn.Module):
     def __init__(self, F_g, F_l, F_int):
         super().__init__()
-        self.W_g = nn.Conv2d(F_g, F_int, 1)
-        self.W_x = nn.Conv2d(F_l, F_int, 1)
+        self.W_g = nn.Conv2d(F_g, F_int, 1)     # gating signal (decoder)
+        self.W_x = nn.Conv2d(F_l, F_int, 1)     # skip connection (encoder)
         self.psi = nn.Sequential(nn.Conv2d(F_int,1,1), nn.Sigmoid())
         self.relu = nn.ReLU()
 
@@ -247,4 +247,4 @@ def train():
 
 # ================= RUN =================
 if __name__ == "__main__":
-    train()\
+    train()

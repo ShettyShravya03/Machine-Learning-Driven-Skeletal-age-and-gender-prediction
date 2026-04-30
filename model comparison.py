@@ -1,16 +1,11 @@
 # =============================================================================
 #  CVM Skeletal Age & Gender Prediction  –  Model Training + Comparison
 #
-#  Two bugs fixed in this version that were silently killing performance:
+#  Two bug fixed in this version that was silently killing performance:
 #
 #  FIX-1: "Age" column was inside FEATURE_COLS — model was predicting age
 #          using age as an input. R² was 1.0, MAE was 0.001. Took an
 #          embarrassingly long time to catch. Now explicitly excluded.
-#
-#  FIX-2: CatBoostClassifier with class_weights=[1,1] crashes sklearn's
-#          clone() — StackingClassifier calls clone() internally on all
-#          base estimators. Replaced with auto_class_weights="Balanced"
-#          which is clone-safe and does the same thing.
 # =============================================================================
 
 import os, warnings
@@ -745,6 +740,15 @@ gen_df.to_excel("gender_model_comparison_final.xlsx", index=False)
 # save model names so inference scripts know what they loaded
 with open("best_age_model_name.txt",    "w") as f: f.write(best_age_name)
 with open("best_gender_model_name.txt", "w") as f: f.write(best_gen_name)
+
+
+
+
+
+
+
+
+
 
 
 # =============================================================================
